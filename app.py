@@ -704,7 +704,7 @@ with c_dl1:
 
 with c_dl2:
     st.download_button(
-        "⭐ お気に入りをCSV出力（tags付き1）",
+        "⭐ お気に入りをCSV出力（tags付き）",
         data=fav_export.to_csv(index=False).encode("utf-8-sig"),
         file_name=f"favorites_{time.strftime('%Y%m%d')}.csv",
         mime="text/csv",
