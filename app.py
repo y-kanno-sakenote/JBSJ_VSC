@@ -539,12 +539,13 @@ disp["★"] = disp["_row_id"].apply(lambda rid: rid in st.session_state.favs)
 # LinkColumn 設定
 column_config = {
     "★": st.column_config.CheckboxColumn("★", help="気になる論文にチェック/解除", default=False, width="small"),
+    "開始ページ": st.column_config.NumberColumn("p.始", help="論文の開始ページ"),
 }
 if "HPリンク先" in disp.columns:
-    column_config["HPリンク先"] = st.column_config.LinkColumn("HP", help="外部サイトへ移動", display_text="HP")
+    column_config["HPリンク先"] = st.column_config.LinkColumn("HP", help="HPページを開く")
 if "PDFリンク先" in disp.columns:
-    column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", help="PDFを開く", display_text="PDF")
-    
+    column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", help="PDFを開く")
+
 # 「No.」の右にリンク列（HP → PDF の順）を移動
 cols = [c for c in disp.columns if c not in ["★", "_row_id"]]
 present_links = [lc for lc in ["HPリンク先", "PDFリンク先"] if lc in cols]
@@ -618,13 +619,14 @@ fav_display_order = ["★"] + cols + ["_row_id"]
 
 fav_column_config = {
     "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加", default=True, width="small"),
+    "開始ページ": st.column_config.NumberColumn("p.始", help="論文の開始ページ"),
     "tags": st.column_config.TextColumn("tags（カンマ/空白区切り）", help="例: 清酒, 乳酸菌"),
 }
 if "HPリンク先" in fav_disp.columns:
-    fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HP", display_text="HP")
+    fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HP", help="HPページを開く")
 if "PDFリンク先" in fav_disp.columns:
-    fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", display_text="PDF")
-
+    fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", help="PDFを開く")
+    
     # お気に入り表：★と tags のみ編集可
     with st.form("fav_table_form", clear_on_submit=False):
         fav_edited = st.data_editor(
