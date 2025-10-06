@@ -545,7 +545,15 @@ if "HPリンク先" in disp.columns:
 if "PDFリンク先" in disp.columns:
     column_config["PDFリンク先"] = st.column_config.LinkColumn("PDFリンク先", help="PDFを開く", display_text="PDF")
 
-display_order = ["★"] + [c for c in disp.columns if c not in ["★", "_row_id"]] + ["_row_id"]
+# 「No.」の右にリンク列（HPリンク先 / PDFリンク先）を移動
+cols = [c for c in disp.columns if c not in ["★", "_row_id"]]
+if "No." in cols:
+    idx = cols.index("No.")
+    for link_col in ["HPリンク先", "PDFリンク先"]:
+        if link_col in cols:
+            cols.remove(link_col)
+            cols.insert(idx + 1, link_col)
+display_order = ["★"] + cols + ["_row_id"]
 
 # --- メイン表（フォームで一括反映） ---
 st.subheader("論文リスト")
@@ -598,7 +606,16 @@ if not fav_disp.empty:
     fav_disp["★"] = fav_disp["_row_id"].apply(lambda rid: rid in st.session_state.favs)
     fav_disp["tags"] = fav_disp["_row_id"].apply(tags_str_for)  # ← 表示＆編集に使う
 
-    fav_display_order = ["★"] + [c for c in fav_disp.columns if c not in ["★", "_row_id"]] + ["_row_id"]
+# 「No.」の右にリンク列（HPリンク先 / PDFリンク先）を移動
+cols = [c for c in fav_disp.columns if c not in ["★", "_row_id"]]
+if "No." in cols:
+    idx = cols.index("No.")
+    for link_col in ["HPリンク先", "PDFリンク先"]:
+        if link_col in cols:
+            cols.remove(link_col)
+            cols.insert(idx + 1, link_col)
+fav_display_order = ["★"] + cols + ["_row_id"]
+
 
     fav_column_config = {
         "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加（下のボタンで反映）", default=True, width="small"),
