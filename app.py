@@ -556,7 +556,7 @@ with st.form("main_table_form", clear_on_submit=False):
         use_container_width=True,
         hide_index=True,
         column_config=column_config,
-        disabled=[c for c in display_order if c != "★"],  # ★のみ編集可
+        disabled=[c for c in display_order if c != "★"],
         height=520,
         num_rows="fixed",
     )
@@ -579,13 +579,12 @@ with c2:
 # お気に入り一覧（フィルタ無視で全体から）＋ tags 列（編集可）
 visible_cols_full = make_visible_cols(df)
 
-# ★ こちらも同じように summary を著者の右へ
+# ★ 著者の右に summary を挿入（既存ロジックそのまま）
 if "著者" in visible_cols_full and "summary" in df.columns:
     idx = visible_cols_full.index("著者")
     if "summary" not in visible_cols_full:
         visible_cols_full.insert(idx + 1, "summary")
 
-fav_disp_full = df.loc[:, visible_cols_full].copy()
 fav_disp_full = df.loc[:, visible_cols_full].copy()
 fav_disp_full["_row_id"] = fav_disp_full.apply(make_row_id, axis=1)
 fav_disp = fav_disp_full[fav_disp_full["_row_id"].isin(st.session_state.favs)].copy()
@@ -596,59 +595,38 @@ def tags_str_for(rid: str) -> str:
 
 if not fav_disp.empty:
     fav_disp["★"] = fav_disp["_row_id"].apply(lambda rid: rid in st.session_state.favs)
-    fav_disp["tags"] = fav_disp["_row_id"].apply(tags_str_for)  # ← 表示＆編集に使う
+    fav_disp["tags"] = fav_disp["_row_id"].apply(tags_str_for)
 
-    fav_display_order = ["★"] + [c for c in fav_disp.columns if c not in ["★", "_row_id"]] + ["_row_id"]
-
+    # ★ カラム設定（LinkColumn を “HP”“PDF” 表示に）
     fav_column_config = {
-        "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加（下のボタンで反映）", default=True, width="small"),
+        "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加", default=True, width="small"),
         "tags": st.column_config.TextColumn("tags（カンマ/空白区切り）", help="例: 清酒, 乳酸菌"),
     }
     if "HPリンク先" in fav_disp.columns:
-        fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HPリンク先", display_text="HP")
+        fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HP", display_text="HP")
     if "PDFリンク先" in fav_disp.columns:
-        fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDFリンク先", display_text="PDF")
+        fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", display_text="PDF")
 
-    # お気に入り表：★と tags のみ編集可
-    with st.form("fav_table_form", clear_on_submit=False):
-        fav_edited = st.data_editor(
-            fav_disp[fav_display_order],
-            key="fav_editor",
-            use_container_width=True,
-            hide_index=True,
-            column_config=fav_column_config,
-            disabled=[c for c in fav_display_order if c not in ["★", "tags"]],  # ← tags を編集可に
-            height=420,
-            num_rows="fixed",
-        )
-        apply_fav = st.form_submit_button("お気に入りの変更（★/tags）を更新", use_container_width=True)
+    # ★ 列順：No. の直後に HP / PDF を固定配置
+    fixed_front_f = ["★", "No.", "HPリンク先", "PDFリンク先"]
+    rest_f = [c for c in fav_disp.columns if c not in ["★", "_row_id", "No.", "HPリンク先", "PDFリンク先"]]
+    fav_display_order = fixed_front_f + rest_f + ["_row_id"]
 
-    if apply_fav:
-        # ★の更新
-        subset_ids_fav = set(fav_disp["_row_id"].tolist())
-        fav_checked_subset = set(fav_edited.loc[fav_edited["★"] == True, "_row_id"].tolist())
-        st.session_state.favs = (st.session_state.favs - subset_ids_fav) | fav_checked_subset
-
-        # tags の更新（行ごとにテキストをパース → set に格納）
-        def parse_tags(s):
-            if not isinstance(s, str): s = str(s or "")
-            parts = [t.strip() for t in re.split(r"[ ,，、；;　]+", s) if t.strip()]
-            return set(parts)
-        for _, r in fav_edited.iterrows():
-            rid = r["_row_id"]
-            tag_set = parse_tags(r.get("tags", ""))
-            if tag_set:
-                st.session_state.fav_tags[rid] = tag_set
-            elif rid in st.session_state.fav_tags:
-                # 空にした場合は削除
-                del st.session_state.fav_tags[rid]
-
-        st.success("お気に入り（★/tags）を反映しました")
-        st.rerun()
+    # ★ Key 衝突回避のため、新しいキー名
+    st.data_editor(
+        fav_disp[fav_display_order],
+        key="fav_editor_v3",
+        on_change=update_fav_and_tags_from_favs,
+        use_container_width=True,
+        hide_index=True,
+        column_config=fav_column_config,
+        disabled=[c for c in fav_display_order if c not in ["★", "tags"]],
+        height=420,
+        num_rows="fixed",
+    )
 else:
     st.info("お気に入りは未選択です。上の表の『★』にチェックしてから反映してください。")
-    fav_edited = None
-
+    
 # -------------------- タグでお気に入りを絞り込み（AND/OR） --------------------
 with st.expander("🔎 タグでお気に入りを絞り込み（AND/OR）", expanded=False):
     tag_query = st.text_input("タグ検索（カンマ/空白区切り）", key="tag_query")
