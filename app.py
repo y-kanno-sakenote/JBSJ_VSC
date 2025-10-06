@@ -541,18 +541,19 @@ column_config = {
     "★": st.column_config.CheckboxColumn("★", help="気になる論文にチェック/解除", default=False, width="small"),
 }
 if "HPリンク先" in disp.columns:
-    column_config["HPリンク先"] = st.column_config.LinkColumn("HPリンク先", help="外部サイトへ移動", display_text="HP")
+    column_config["HPリンク先"] = st.column_config.LinkColumn("HP", help="外部サイトへ移動", display_text="HP")
 if "PDFリンク先" in disp.columns:
-    column_config["PDFリンク先"] = st.column_config.LinkColumn("PDFリンク先", help="PDFを開く", display_text="PDF")
-
-# 「No.」の右にリンク列（HPリンク先 / PDFリンク先）を移動
+    column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", help="PDFを開く", display_text="PDF")
+    
+# 「No.」の右にリンク列（HP → PDF の順）を移動
 cols = [c for c in disp.columns if c not in ["★", "_row_id"]]
+present_links = [lc for lc in ["HPリンク先", "PDFリンク先"] if lc in cols]
+# いったん全リンク列を取り除く
+cols = [c for c in cols if c not in present_links]
+# 「No.」の直後に、HP→PDF の順でまとめて差し込む（順序が逆転しない）
 if "No." in cols:
     idx = cols.index("No.")
-    for link_col in ["HPリンク先", "PDFリンク先"]:
-        if link_col in cols:
-            cols.remove(link_col)
-            cols.insert(idx + 1, link_col)
+    cols[idx+1:idx+1] = present_links
 display_order = ["★"] + cols + ["_row_id"]
 
 # --- メイン表（フォームで一括反映） ---
@@ -606,24 +607,23 @@ if not fav_disp.empty:
     fav_disp["★"] = fav_disp["_row_id"].apply(lambda rid: rid in st.session_state.favs)
     fav_disp["tags"] = fav_disp["_row_id"].apply(tags_str_for)  # ← 表示＆編集に使う
 
-    # 「No.」の右にリンク列（HPリンク先 / PDFリンク先）を移動
-    cols = [c for c in fav_disp.columns if c not in ["★", "_row_id"]]
-    if "No." in cols:
-        idx = cols.index("No.")
-        for link_col in ["HPリンク先", "PDFリンク先"]:
-            if link_col in cols:
-                cols.remove(link_col)
-                cols.insert(idx + 1, link_col)
-    fav_display_order = ["★"] + cols + ["_row_id"]
-    
-    fav_column_config = {
-        "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加（下のボタンで反映）", default=True, width="small"),
-        "tags": st.column_config.TextColumn("tags（カンマ/空白区切り）", help="例: 清酒, 乳酸菌"),
-    }
-    if "HPリンク先" in fav_disp.columns:
-        fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HPリンク先", display_text="HP")
-    if "PDFリンク先" in fav_disp.columns:
-        fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDFリンク先", display_text="PDF")
+# 「No.」の右にリンク列（HP → PDF の順）を移動
+cols = [c for c in fav_disp.columns if c not in ["★", "_row_id"]]
+present_links = [lc for lc in ["HPリンク先", "PDFリンク先"] if lc in cols]
+cols = [c for c in cols if c not in present_links]
+if "No." in cols:
+    idx = cols.index("No.")
+    cols[idx+1:idx+1] = present_links
+fav_display_order = ["★"] + cols + ["_row_id"]
+
+fav_column_config = {
+    "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加", default=True, width="small"),
+    "tags": st.column_config.TextColumn("tags（カンマ/空白区切り）", help="例: 清酒, 乳酸菌"),
+}
+if "HPリンク先" in fav_disp.columns:
+    fav_column_config["HPリンク先"] = st.column_config.LinkColumn("HP", display_text="HP")
+if "PDFリンク先" in fav_disp.columns:
+    fav_column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", display_text="PDF")
 
     # お気に入り表：★と tags のみ編集可
     with st.form("fav_table_form", clear_on_submit=False):
