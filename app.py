@@ -559,16 +559,29 @@ cols = [c for c in cols if c not in present_links]
 if "No." in cols:
     idx = cols.index("No.")
     cols[idx+1:idx+1] = present_links
-# これまでの display_order 作成を削除して、代わりにこちらを使用
+
 def build_display_order(df_like: pd.DataFrame, prefer_first: list[str]) -> list[str]:
-    """存在する列だけで安全に列順を作る"""
     base = ["★"]
     head = [c for c in prefer_first if c in df_like.columns]
     tail = [c for c in df_like.columns if c not in set(base + head + ["_row_id"])]
-    return base + head + tail + ["_row_id"]
+    cols = base + head + tail + (["_row_id"] if "_row_id" in df_like.columns else [])
+    # 最後に実在列だけに絞る（安全網）
+    return [c for c in cols if c in df_like.columns]
 
 prefer_first_main = ["No.", "HPリンク先", "PDFリンク先"]
 display_order = build_display_order(disp, prefer_first_main)
+safe_main_cols = [c for c in display_order if c in disp.columns]
+st.data_editor(
+    disp.loc[:, safe_main_cols],
+    key="main_editor",
+    on_change=handle_main_editor_change,
+    use_container_width=True,
+    hide_index=True,
+    column_config=column_config,
+    disabled=[c for c in safe_main_cols if c != "★"],
+    height=520,
+    num_rows="fixed",
+)
 
 # --- メイン表（フォームで一括反映） ---
 st.subheader("論文リスト")
