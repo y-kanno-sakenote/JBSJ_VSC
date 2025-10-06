@@ -542,9 +542,13 @@ column_config = {
     "開始ページ": st.column_config.NumberColumn("p.始", help="論文の開始ページ"),
 }
 if "HPリンク先" in disp.columns:
-    column_config["HPリンク先"] = st.column_config.LinkColumn("HP", help="HPページを開く")
+    column_config["HPリンク先"] = st.column_config.LinkColumn(
+        "HP", help="HPページを開く", display_text="HP"
+    )
 if "PDFリンク先" in disp.columns:
-    column_config["PDFリンク先"] = st.column_config.LinkColumn("PDF", help="PDFを開く")
+    column_config["PDFリンク先"] = st.column_config.LinkColumn(
+        "PDF", help="PDFを開く", display_text="PDF"
+    )
 
 # 「No.」の右にリンク列（HP → PDF の順）を移動
 cols = [c for c in disp.columns if c not in ["★", "_row_id"]]
