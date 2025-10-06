@@ -527,6 +527,27 @@ if "著者" in visible_cols and "summary" in filtered.columns:
 disp = filtered.loc[:, visible_cols].copy()
 disp["_row_id"] = disp.apply(make_row_id, axis=1)
 
+# ★ メイン表のコールバック（★チェック→favsへ反映）
+def handle_main_editor_change():
+    edited_rows = st.session_state.get("main_editor", {}).get("edited_rows", {})
+    row_ids = st.session_state.get("_disp_row_ids", [])
+
+    for idx_str, changes in edited_rows.items():
+        try:
+            idx = int(idx_str)
+        except Exception:
+            continue
+        if not (0 <= idx < len(row_ids)):
+            continue
+        rid = row_ids[idx]
+
+        if "★" in changes:
+            if bool(changes["★"]):
+                st.session_state.favs.add(rid)
+            else:
+                st.session_state.favs.discard(rid)
+
+
 # セッション初期化：お気に入り集合／タグ辞書
 if "favs" not in st.session_state:
     st.session_state.favs = set()
@@ -571,6 +592,9 @@ def build_display_order(df_like: pd.DataFrame, prefer_first: list[str]) -> list[
 prefer_first_main = ["No.", "HPリンク先", "PDFリンク先"]
 display_order = build_display_order(disp, prefer_first_main)
 safe_main_cols = [c for c in display_order if c in disp.columns]
+# エディタ用に行IDを退避（コールバックから参照するため）
+st.session_state["_disp_row_ids"] = disp["_row_id"].tolist()
+
 st.data_editor(
     disp.loc[:, safe_main_cols],
     key="main_editor",
