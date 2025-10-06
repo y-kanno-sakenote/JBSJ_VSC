@@ -610,12 +610,12 @@ if not fav_disp.empty:
     cols = [c for c in fav_disp.columns if c not in ["★", "_row_id"]]
     if "No." in cols:
         idx = cols.index("No.")
-        for link_col in ["HP", "PDFリンク先"]:
+        for link_col in ["HPリンク先", "PDFリンク先"]:
             if link_col in cols:
                 cols.remove(link_col)
                 cols.insert(idx + 1, link_col)
     fav_display_order = ["★"] + cols + ["_row_id"]
-
+    
     fav_column_config = {
         "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加（下のボタンで反映）", default=True, width="small"),
         "tags": st.column_config.TextColumn("tags（カンマ/空白区切り）", help="例: 清酒, 乳酸菌"),
