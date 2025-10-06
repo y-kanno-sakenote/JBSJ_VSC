@@ -633,7 +633,8 @@ if "HPリンク先" in fav_disp.columns:
 if "PDFリンク先" in fav_disp.columns:
     fav_column_config["PDFリンク先"] = st.column_config.LinkColumn(
         "PDF", help="PDFを開く", display_text="PDF"
-            
+    )
+
     # お気に入り表：★と tags のみ編集可
     with st.form("fav_table_form", clear_on_submit=False):
         fav_edited = st.data_editor(
