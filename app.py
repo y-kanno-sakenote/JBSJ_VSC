@@ -559,7 +559,16 @@ cols = [c for c in cols if c not in present_links]
 if "No." in cols:
     idx = cols.index("No.")
     cols[idx+1:idx+1] = present_links
-display_order = ["★"] + cols + ["_row_id"]
+# これまでの display_order 作成を削除して、代わりにこちらを使用
+def build_display_order(df_like: pd.DataFrame, prefer_first: list[str]) -> list[str]:
+    """存在する列だけで安全に列順を作る"""
+    base = ["★"]
+    head = [c for c in prefer_first if c in df_like.columns]
+    tail = [c for c in df_like.columns if c not in set(base + head + ["_row_id"])]
+    return base + head + tail + ["_row_id"]
+
+prefer_first_main = ["No.", "HPリンク先", "PDFリンク先"]
+display_order = build_display_order(disp, prefer_first_main)
 
 # --- メイン表（フォームで一括反映） ---
 st.subheader("論文リスト")
@@ -619,7 +628,9 @@ cols = [c for c in cols if c not in present_links]
 if "No." in cols:
     idx = cols.index("No.")
     cols[idx+1:idx+1] = present_links
-fav_display_order = ["★"] + cols + ["_row_id"]
+# これまでの fav_display_order 作成を削除して、代わりにこちらを使用
+prefer_first_fav = ["No.", "HPリンク先", "PDFリンク先"]
+fav_display_order = build_display_order(fav_disp, prefer_first_fav)
 
 fav_column_config = {
     "★": st.column_config.CheckboxColumn("★", help="チェックで解除/追加", default=True, width="small"),
